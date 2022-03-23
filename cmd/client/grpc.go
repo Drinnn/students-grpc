@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"io"
 	"log"
 
 	"github.com/Drinnn/students-grpc/protos"
@@ -18,7 +19,8 @@ func main() {
 
 	client := protos.NewStudentServiceClient(connection)
 	
-	AddStudent(client)
+	// AddStudent(client)
+	AddStudentVerbose(client)
 }
 
 func AddStudent(client protos.StudentServiceClient) {
@@ -33,4 +35,30 @@ func AddStudent(client protos.StudentServiceClient) {
 	}
 
 	fmt.Println(res)
+}
+
+func AddStudentVerbose(client protos.StudentServiceClient) {
+	req := &protos.Student{
+		Name: "John",
+		Email: "john@mail.com",
+	}
+
+	responseStream, err := client.AddStudentVerbose(context.Background(), req)
+	if err != nil {
+		log.Fatalf("Could not make gRPC request: %v", err)
+	}
+
+	for {
+		stream, err := responseStream.Recv()
+
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			log.Fatalf("Could not make gRPC request: %v", err)
+		}
+		
+		fmt.Println("Status: ", stream.Status)
+	}
+
 }
