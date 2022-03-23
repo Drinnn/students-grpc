@@ -7,6 +7,7 @@ import (
 	"github.com/Drinnn/students-grpc/protos"
 	"github.com/Drinnn/students-grpc/services"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/reflection"
 )
 
 func main() {
@@ -16,6 +17,7 @@ func main() {
 	}
 
 	grpcServer := grpc.NewServer()
+	reflection.Register(grpcServer)
 
 	protos.RegisterStudentServiceServer(grpcServer, services.NewStudentService())
 
