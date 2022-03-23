@@ -24,6 +24,7 @@ const _ = grpc.SupportPackageIsVersion7
 type StudentServiceClient interface {
 	AddStudent(ctx context.Context, in *Student, opts ...grpc.CallOption) (*Student, error)
 	AddStudentVerbose(ctx context.Context, in *Student, opts ...grpc.CallOption) (StudentService_AddStudentVerboseClient, error)
+	AddStudents(ctx context.Context, opts ...grpc.CallOption) (StudentService_AddStudentsClient, error)
 }
 
 type studentServiceClient struct {
@@ -75,12 +76,47 @@ func (x *studentServiceAddStudentVerboseClient) Recv() (*StudentResultStream, er
 	return m, nil
 }
 
+func (c *studentServiceClient) AddStudents(ctx context.Context, opts ...grpc.CallOption) (StudentService_AddStudentsClient, error) {
+	stream, err := c.cc.NewStream(ctx, &StudentService_ServiceDesc.Streams[1], "/protos.StudentService/AddStudents", opts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &studentServiceAddStudentsClient{stream}
+	return x, nil
+}
+
+type StudentService_AddStudentsClient interface {
+	Send(*Student) error
+	CloseAndRecv() (*Students, error)
+	grpc.ClientStream
+}
+
+type studentServiceAddStudentsClient struct {
+	grpc.ClientStream
+}
+
+func (x *studentServiceAddStudentsClient) Send(m *Student) error {
+	return x.ClientStream.SendMsg(m)
+}
+
+func (x *studentServiceAddStudentsClient) CloseAndRecv() (*Students, error) {
+	if err := x.ClientStream.CloseSend(); err != nil {
+		return nil, err
+	}
+	m := new(Students)
+	if err := x.ClientStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
 // StudentServiceServer is the server API for StudentService service.
 // All implementations must embed UnimplementedStudentServiceServer
 // for forward compatibility
 type StudentServiceServer interface {
 	AddStudent(context.Context, *Student) (*Student, error)
 	AddStudentVerbose(*Student, StudentService_AddStudentVerboseServer) error
+	AddStudents(StudentService_AddStudentsServer) error
 	mustEmbedUnimplementedStudentServiceServer()
 }
 
@@ -93,6 +129,9 @@ func (UnimplementedStudentServiceServer) AddStudent(context.Context, *Student) (
 }
 func (UnimplementedStudentServiceServer) AddStudentVerbose(*Student, StudentService_AddStudentVerboseServer) error {
 	return status.Errorf(codes.Unimplemented, "method AddStudentVerbose not implemented")
+}
+func (UnimplementedStudentServiceServer) AddStudents(StudentService_AddStudentsServer) error {
+	return status.Errorf(codes.Unimplemented, "method AddStudents not implemented")
 }
 func (UnimplementedStudentServiceServer) mustEmbedUnimplementedStudentServiceServer() {}
 
@@ -146,6 +185,32 @@ func (x *studentServiceAddStudentVerboseServer) Send(m *StudentResultStream) err
 	return x.ServerStream.SendMsg(m)
 }
 
+func _StudentService_AddStudents_Handler(srv interface{}, stream grpc.ServerStream) error {
+	return srv.(StudentServiceServer).AddStudents(&studentServiceAddStudentsServer{stream})
+}
+
+type StudentService_AddStudentsServer interface {
+	SendAndClose(*Students) error
+	Recv() (*Student, error)
+	grpc.ServerStream
+}
+
+type studentServiceAddStudentsServer struct {
+	grpc.ServerStream
+}
+
+func (x *studentServiceAddStudentsServer) SendAndClose(m *Students) error {
+	return x.ServerStream.SendMsg(m)
+}
+
+func (x *studentServiceAddStudentsServer) Recv() (*Student, error) {
+	m := new(Student)
+	if err := x.ServerStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
 // StudentService_ServiceDesc is the grpc.ServiceDesc for StudentService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -163,6 +228,11 @@ var StudentService_ServiceDesc = grpc.ServiceDesc{
 			StreamName:    "AddStudentVerbose",
 			Handler:       _StudentService_AddStudentVerbose_Handler,
 			ServerStreams: true,
+		},
+		{
+			StreamName:    "AddStudents",
+			Handler:       _StudentService_AddStudents_Handler,
+			ClientStreams: true,
 		},
 	},
 	Metadata: "student.proto",
