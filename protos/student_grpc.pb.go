@@ -25,6 +25,7 @@ type StudentServiceClient interface {
 	AddStudent(ctx context.Context, in *Student, opts ...grpc.CallOption) (*Student, error)
 	AddStudentVerbose(ctx context.Context, in *Student, opts ...grpc.CallOption) (StudentService_AddStudentVerboseClient, error)
 	AddStudents(ctx context.Context, opts ...grpc.CallOption) (StudentService_AddStudentsClient, error)
+	AddStudentStreamBoth(ctx context.Context, opts ...grpc.CallOption) (StudentService_AddStudentStreamBothClient, error)
 }
 
 type studentServiceClient struct {
@@ -110,6 +111,37 @@ func (x *studentServiceAddStudentsClient) CloseAndRecv() (*Students, error) {
 	return m, nil
 }
 
+func (c *studentServiceClient) AddStudentStreamBoth(ctx context.Context, opts ...grpc.CallOption) (StudentService_AddStudentStreamBothClient, error) {
+	stream, err := c.cc.NewStream(ctx, &StudentService_ServiceDesc.Streams[2], "/protos.StudentService/AddStudentStreamBoth", opts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &studentServiceAddStudentStreamBothClient{stream}
+	return x, nil
+}
+
+type StudentService_AddStudentStreamBothClient interface {
+	Send(*Student) error
+	Recv() (*StudentResultStream, error)
+	grpc.ClientStream
+}
+
+type studentServiceAddStudentStreamBothClient struct {
+	grpc.ClientStream
+}
+
+func (x *studentServiceAddStudentStreamBothClient) Send(m *Student) error {
+	return x.ClientStream.SendMsg(m)
+}
+
+func (x *studentServiceAddStudentStreamBothClient) Recv() (*StudentResultStream, error) {
+	m := new(StudentResultStream)
+	if err := x.ClientStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
 // StudentServiceServer is the server API for StudentService service.
 // All implementations must embed UnimplementedStudentServiceServer
 // for forward compatibility
@@ -117,6 +149,7 @@ type StudentServiceServer interface {
 	AddStudent(context.Context, *Student) (*Student, error)
 	AddStudentVerbose(*Student, StudentService_AddStudentVerboseServer) error
 	AddStudents(StudentService_AddStudentsServer) error
+	AddStudentStreamBoth(StudentService_AddStudentStreamBothServer) error
 	mustEmbedUnimplementedStudentServiceServer()
 }
 
@@ -132,6 +165,9 @@ func (UnimplementedStudentServiceServer) AddStudentVerbose(*Student, StudentServ
 }
 func (UnimplementedStudentServiceServer) AddStudents(StudentService_AddStudentsServer) error {
 	return status.Errorf(codes.Unimplemented, "method AddStudents not implemented")
+}
+func (UnimplementedStudentServiceServer) AddStudentStreamBoth(StudentService_AddStudentStreamBothServer) error {
+	return status.Errorf(codes.Unimplemented, "method AddStudentStreamBoth not implemented")
 }
 func (UnimplementedStudentServiceServer) mustEmbedUnimplementedStudentServiceServer() {}
 
@@ -211,6 +247,32 @@ func (x *studentServiceAddStudentsServer) Recv() (*Student, error) {
 	return m, nil
 }
 
+func _StudentService_AddStudentStreamBoth_Handler(srv interface{}, stream grpc.ServerStream) error {
+	return srv.(StudentServiceServer).AddStudentStreamBoth(&studentServiceAddStudentStreamBothServer{stream})
+}
+
+type StudentService_AddStudentStreamBothServer interface {
+	Send(*StudentResultStream) error
+	Recv() (*Student, error)
+	grpc.ServerStream
+}
+
+type studentServiceAddStudentStreamBothServer struct {
+	grpc.ServerStream
+}
+
+func (x *studentServiceAddStudentStreamBothServer) Send(m *StudentResultStream) error {
+	return x.ServerStream.SendMsg(m)
+}
+
+func (x *studentServiceAddStudentStreamBothServer) Recv() (*Student, error) {
+	m := new(Student)
+	if err := x.ServerStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
 // StudentService_ServiceDesc is the grpc.ServiceDesc for StudentService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -232,6 +294,12 @@ var StudentService_ServiceDesc = grpc.ServiceDesc{
 		{
 			StreamName:    "AddStudents",
 			Handler:       _StudentService_AddStudents_Handler,
+			ClientStreams: true,
+		},
+		{
+			StreamName:    "AddStudentStreamBoth",
+			Handler:       _StudentService_AddStudentStreamBoth_Handler,
+			ServerStreams: true,
 			ClientStreams: true,
 		},
 	},

@@ -90,3 +90,23 @@ func (*StudentService) AddStudents(stream protos.StudentService_AddStudentsServe
 		fmt.Println("Adding", req.Name)
 	}
 }
+
+func (*StudentService) AddStudentStreamBoth(stream protos.StudentService_AddStudentStreamBothServer) error {
+	for {
+		req, err := stream.Recv()
+		if err == io.EOF {
+			return nil
+		}
+		if err != nil {
+			log.Fatalf("Error receiving stream from the client: %v", err)
+		}
+
+		err = stream.Send(&protos.StudentResultStream{
+			Status: "Added",
+			Student: req,
+		})
+		if err != nil {
+			log.Fatalf("Error sending stream to the client: %v", err)
+		}
+	}
+}
