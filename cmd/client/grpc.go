@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"time"
 
 	"github.com/Drinnn/students-grpc/protos"
 	"google.golang.org/grpc"
@@ -20,7 +21,8 @@ func main() {
 	client := protos.NewStudentServiceClient(connection)
 	
 	// AddStudent(client)
-	AddStudentVerbose(client)
+	// AddStudentVerbose(client)
+	AddStudents(client)
 }
 
 func AddStudent(client protos.StudentServiceClient) {
@@ -61,4 +63,51 @@ func AddStudentVerbose(client protos.StudentServiceClient) {
 		fmt.Println("Status: ", stream.Status)
 	}
 
+}
+
+func AddStudents(client protos.StudentServiceClient) {
+	reqs := []*protos.Student{
+		{
+			Id: "1",
+			Name: "John",
+			Email: "john@mail.com",
+		},
+		{
+			Id: "2",
+			Name: "Adam",
+			Email: "adam@mail.com",
+		},
+		{
+			Id: "3",
+			Name: "Doe",
+			Email: "doe@mail.com",
+		},
+		{
+			Id: "4",
+			Name: "Abdhu",
+			Email: "abdhu@mail.com",
+		},
+		{
+			Id: "5",
+			Name: "Wesley",
+			Email: "wesley@mail.com",
+		},
+	}
+
+	stream, err := client.AddStudents(context.Background())
+	if err != nil {
+		log.Fatalf("Error creating request: %v", err)
+	}
+
+	for _, req := range reqs {
+		stream.Send(req)
+		time.Sleep(time.Second * 3)
+	}
+
+	res, err := stream.CloseAndRecv()
+	if err != nil {
+		log.Fatalf("Error receiving response: %v", err)
+	}
+
+	fmt.Println(res)
 }

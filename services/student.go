@@ -87,6 +87,6 @@ func (*StudentService) AddStudents(stream protos.StudentService_AddStudentsServe
 			Email: req.Email,
 		})
 
-		fmt.Println("Adding ", req.Name)
+		fmt.Println("Adding", req.Name)
 	}
 }
