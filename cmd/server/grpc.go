@@ -4,6 +4,8 @@ import (
 	"log"
 	"net"
 
+	"github.com/Drinnn/students-grpc/protos"
+	"github.com/Drinnn/students-grpc/services"
 	"google.golang.org/grpc"
 )
 
@@ -14,6 +16,9 @@ func main() {
 	}
 
 	grpcServer := grpc.NewServer()
+
+	protos.RegisterStudentServiceServer(grpcServer, services.NewStudentService())
+
 	if err = grpcServer.Serve(lis); err != nil {
 		log.Fatalf("Could not serve: %v", err)
 	}
