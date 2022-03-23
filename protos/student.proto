@@ -8,6 +8,12 @@ message Student {
     string email = 3;
 }
 
+message StudentResultStream {
+    string status = 1;
+    Student student = 2;
+}
+
 service StudentService {
     rpc AddStudent (Student) returns (Student);
+    rpc AddStudentVerbose (Student) returns (stream StudentResultStream);
 }
